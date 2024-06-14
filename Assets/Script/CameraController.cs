@@ -5,8 +5,9 @@ using UnityEngine;
 
 public class CameraController : MonoBehaviour
 {
+    private PlaneController plane;
     [SerializeField] Transform[] fov;
-    [SerializeField] float smooth;
+    [SerializeField] float smooth = 100f;
 
     private int index = 0;
     private Vector3 target;
@@ -15,8 +16,7 @@ public class CameraController : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.V)) index += 1;
         if (index > 4) index = 0;
-
-
+        
         target = fov[index].position;
 
     }
