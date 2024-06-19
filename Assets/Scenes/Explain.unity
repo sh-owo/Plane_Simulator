@@ -151,9 +151,12 @@ MonoBehaviour:
   C_L: 0.5
   Airdensity: 1.225
   wingArea: 10
-  liftfactor: 0.8
   hud: {fileID: 0}
   sliderthrottle: {fileID: 1387129597}
+  PitchSurface: {fileID: 0}
+  YawSurface: {fileID: 0}
+  LeftRolluface: {fileID: 0}
+  RightRollSurface: {fileID: 0}
 --- !u!1 &191511229
 GameObject:
   m_ObjectHideFlags: 0

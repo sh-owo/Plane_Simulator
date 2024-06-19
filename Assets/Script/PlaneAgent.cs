@@ -6,7 +6,7 @@ using TMPro;
 using Unity.VisualScripting;
 using UnityEngine.UI;
 
-public class PlaneController : MonoBehaviour
+public class PlaneAgent : MonoBehaviour
 {
     [Header("Plane Stats")]
     public float throttleIncrease = 0.1f;
@@ -37,8 +37,6 @@ public class PlaneController : MonoBehaviour
 
     Rigidbody rb;
     [Header("HUD")]
-    [SerializeField] TextMeshProUGUI hud;
-    [SerializeField] Slider sliderthrottle;
 
     [Header("ControlSurface")] 
     [SerializeField] private GameObject PitchSurface;
@@ -83,8 +81,6 @@ public class PlaneController : MonoBehaviour
 
     private void Update() {
         HandleInput(); 
-        updatehud();
-        throttleSlider();
         ControlSurface();
     }
     
@@ -163,22 +159,5 @@ public class PlaneController : MonoBehaviour
         if(roll == 0) RightRollControl = Mathf.Lerp(RightRollControl, 0, Time.deltaTime*2);
 
 
-    }
-
-
-
-    private void updatehud()
-    {
-        hud.text = "Throttle: " + throttle.ToString("F0") + "%\n\n";
-        hud.text += "Airspeed: " + (rb.velocity.magnitude * 3.6f).ToString("F0") + "Km/h\n";
-        hud.text += "Altitude: " + transform.position.y.ToString("F0") + "m\n";
-        hud.text += "Vs: " + (rb.velocity.y * 3.28084f).ToString("F0") + "fpm";
-    }
-    private void throttleSlider()
-    {
-        sliderthrottle.minValue = 0f;
-        sliderthrottle.maxValue = 100f;
-
-        sliderthrottle.value = throttle;
     }
 }
