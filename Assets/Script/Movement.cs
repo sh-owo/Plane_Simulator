@@ -6,12 +6,12 @@ using TMPro;
 using Unity.VisualScripting;
 using UnityEngine.UI;
 
-public class PlaneController : MonoBehaviour
+public class Movement : MonoBehaviour
 {
     [Header("Plane Stats")]
-    public float throttleIncrease = 0.1f;
-    public float MaxSpeed = 400f;
-    public float responsiveness = 6f;
+    public float throttleIncrease;
+    public float MaxSpeed;
+    public float responsiveness;
     [SerializeField] private float Maxheight;
 
     private float throttle;
@@ -19,20 +19,14 @@ public class PlaneController : MonoBehaviour
     private float pitch;
     private float yaw;
     
-    [Header("Lift Setting")]
-    [SerializeField] private float C_L = 1f;
-    [SerializeField] private float Airdensity = 1.225f;
+    //Lift Setting
+     private float C_L = 1f;
+     private float Airdensity = 1.225f;
     [SerializeField] private float wingArea = 12f;
+
+    private float GravityConstant = 9.8f;
     
-    private float responseModifier {
-        get
-        {
-            float new_responseiveness = responsiveness * (( MaxSpeed / rb.velocity.magnitude) / 10);
-            new_responseiveness = Mathf.Clamp(new_responseiveness, 4f, responsiveness + 12);
-            return(rb.mass / 10f) * new_responseiveness;
-        }
-    }
-    
+
 
     Rigidbody rb;
     [Header("HUD")]
@@ -79,6 +73,15 @@ public class PlaneController : MonoBehaviour
         throttle = Math.Clamp(throttle, -5f, 100f);
     }
     
+    private float responseModifier {
+        get
+        {
+            float new_responseiveness = responsiveness * (( MaxSpeed / rb.velocity.magnitude) / 10);
+            new_responseiveness = Mathf.Clamp(new_responseiveness, 4f, responsiveness + 12);
+            return(rb.mass / 10f) * new_responseiveness;
+        }
+    }
+    
 
     private void Update() {
         HandleInput(); 
@@ -87,43 +90,39 @@ public class PlaneController : MonoBehaviour
         ControlSurface();
     }
     
-    
-
     private void FixedUpdate()
     {
-        float engineefficiency = 1 - (rb.position.y / Maxheight);
-        float engine_power = throttle * Calculate_Thrust();
-        Mathf.Lerp(0, engine_power, Time.deltaTime * 2);
-        
-        float gravityConstant = 9.8f;
-        float dragForce = 0.5f * AirDensity() * rb.velocity.sqrMagnitude * 1 * 10;
+
         Vector3 dragDirection = -rb.velocity.normalized;
-        Vector3 dragForceVector = dragDirection * dragForce;
+        Vector3 dragForceVector = dragDirection * Calculate_DragForce();
         
         float aoa = AOA();
         
         
         Vector3 liftForceVector = Vector3.up * 0.5f * Airdensity * (rb.velocity.magnitude) * (rb.velocity.magnitude) * C_L * wingArea * aoa;
         
-        rb.AddForce(transform.forward * engine_power * engineefficiency);
+        rb.AddForce(transform.forward * Calculate_Thrust());
         rb.AddTorque(transform.up * yaw * responseModifier * 1.1f);
         rb.AddTorque(transform.right * pitch * responseModifier * 2f);
         rb.AddTorque(transform.forward * roll * responseModifier * 0.6f);
-        Vector3 gravity = Vector3.down * gravityConstant * rb.mass;
+        Vector3 gravity = Vector3.down * GravityConstant * rb.mass;
 
         rb.AddForce(dragForceVector);
         rb.AddForce(liftForceVector);
-        
         rb.AddForce(gravity);
         
-        float heightChange = rb.velocity.y * Time.fixedDeltaTime;
-        float potentialEnergyChange = gravityConstant * rb.mass * heightChange;
-        float kineticEnergyChange = -potentialEnergyChange; 
-
-        float currentSpeed = rb.velocity.magnitude;
-        float newSpeed = Mathf.Sqrt(Mathf.Max(0, currentSpeed * currentSpeed + (2 * kineticEnergyChange) / rb.mass));
-        Vector3 newVelocity = rb.velocity.normalized * newSpeed;
+        Vector3 newVelocity = rb.velocity.normalized * Calculate_Mechanical();
         rb.velocity = newVelocity;
+        
+
+    }
+
+    private float Calculate_DragForce()
+    {
+        float radangle = AOA();
+        float reference_Area = 10 * Mathf.Atan(radangle / 5f);
+        float dragforce = 0.5f * AirDensity() * rb.velocity.sqrMagnitude * 1 * reference_Area;
+        return reference_Area;
     }
     
     private float AOA()
@@ -141,6 +140,16 @@ public class PlaneController : MonoBehaviour
         return aoaValue;
     }
 
+    private float Calculate_Mechanical()
+    {
+        float heightChange = rb.velocity.y * Time.fixedDeltaTime;
+        float potentialEnergyChange = GravityConstant * rb.mass * heightChange;
+        float kineticEnergyChange = -potentialEnergyChange; 
+
+        float currentSpeed = rb.velocity.magnitude;
+        float newSpeed = Mathf.Sqrt(Mathf.Max(0, currentSpeed * currentSpeed + (2 * kineticEnergyChange) / rb.mass));
+        return newSpeed;
+    }
     private float Calculate_Thrust()
     {
         float ambient_Pressure = AirDensity();
@@ -154,7 +163,11 @@ public class PlaneController : MonoBehaviour
         // 추력 계산
         float thrust = Mathf.Lerp(0f,massFlowRate * (exhaustVelocity - aircraftVelocity) + (exhaustPressure - ambient_Pressure) * exhaustArea,Time.deltaTime * 2);
         // Debug.Log(thrust);
-        return thrust;
+        
+        float Engine_efficiency = 1 - (rb.position.y / Maxheight);
+        float engine_power = throttle * thrust;
+        Mathf.Lerp(0, engine_power, Time.deltaTime * 2);
+        return engine_power * Engine_efficiency;
     }
     private float AirDensity()
     {
@@ -212,3 +225,4 @@ public class PlaneController : MonoBehaviour
 
     
 }
+

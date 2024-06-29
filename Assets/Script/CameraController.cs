@@ -15,7 +15,7 @@ public class CameraController : MonoBehaviour
     private void Update()
     {
         if (Input.GetKeyDown(KeyCode.V)) index += 1;
-        if (index > 4) index = 0;
+        if (index > fov.Length - 1) index = 0;
         
         target = fov[index].position;
 
